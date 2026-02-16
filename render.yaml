@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: employee-leave-backend
+    env: docker
+    dockerfilePath: ./Dockerfile.backend
+    repo: https://github.com/Rea1521/java-projects.git
+    branch: main
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: employee-leave-db
+          property: connectionString
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: employee-leave-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: employee-leave-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://employee-leave-frontend.onrender.com
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+  - type: web
+    name: employee-leave-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+    repo: https://github.com/Rea1521/java-projects.git
+    branch: main
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://employee-leave-backend.onrender.com/api
+
+databases:
+  - name: employee-leave-db
+    databaseName: employeemanagement
+    user: postgres
+    ipAllowList: []
