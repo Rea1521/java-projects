@@ -2,7 +2,6 @@ package com.employeemanagement.security;
 
 import com.employeemanagement.model.User;
 import com.employeemanagement.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -10,10 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
     
     private final UserRepository userRepository;
+    
+    // MANUAL CONSTRUCTOR - FIXES THE "NOT INITIALIZED" ERROR
+    public UserDetailsServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
     
     @Override
     @Transactional

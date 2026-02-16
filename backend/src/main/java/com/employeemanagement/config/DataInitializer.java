@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +19,20 @@ public class DataInitializer implements CommandLineRunner {
     private final HolidayRepository holidayRepository;
     private final PasswordEncoder passwordEncoder;
     
+
+  public DataInitializer(
+            UserRepository userRepository,
+            EmployeeRepository employeeRepository,
+            DepartmentRepository departmentRepository,
+            HolidayRepository holidayRepository,
+            PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
+        this.departmentRepository = departmentRepository;
+        this.holidayRepository = holidayRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @Override
     public void run(String... args) throws Exception {
         // Create admin user if not exists
@@ -42,6 +55,8 @@ public class DataInitializer implements CommandLineRunner {
             adminEmployee.setSickLeaveBalance(12.0);
             adminEmployee.setCasualLeaveBalance(10.0);
             employeeRepository.save(adminEmployee);
+            
+            System.out.println("✅ Admin user created successfully");
         }
         
         // Create sample departments
@@ -50,16 +65,19 @@ public class DataInitializer implements CommandLineRunner {
             it.setName("Information Technology");
             it.setDescription("Responsible for company technical infrastructure");
             departmentRepository.save(it);
+            System.out.println("✅ IT department created");
             
             Department hr = new Department();
             hr.setName("Human Resources");
             hr.setDescription("Manages employee relations and recruitment");
             departmentRepository.save(hr);
+            System.out.println("✅ HR department created");
             
             Department finance = new Department();
             finance.setName("Finance");
             finance.setDescription("Handles financial operations and accounting");
             departmentRepository.save(finance);
+            System.out.println("✅ Finance department created");
         }
         
         // Create sample holidays
@@ -72,6 +90,7 @@ public class DataInitializer implements CommandLineRunner {
             newYear.setDescription("Celebration of the new year");
             newYear.setRecurring(true);
             holidayRepository.save(newYear);
+            System.out.println("✅ New Year holiday created");
             
             Holiday independence = new Holiday();
             independence.setName("Independence Day");
@@ -79,6 +98,7 @@ public class DataInitializer implements CommandLineRunner {
             independence.setDescription("Celebration of independence");
             independence.setRecurring(true);
             holidayRepository.save(independence);
+            System.out.println("✅ Independence Day holiday created");
             
             Holiday christmas = new Holiday();
             christmas.setName("Christmas Day");
@@ -86,6 +106,9 @@ public class DataInitializer implements CommandLineRunner {
             christmas.setDescription("Christmas celebration");
             christmas.setRecurring(true);
             holidayRepository.save(christmas);
+            System.out.println("✅ Christmas holiday created");
         }
+        
+        System.out.println("✅ Data initialization completed");
     }
 }
