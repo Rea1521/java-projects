@@ -39,5 +39,5 @@ services:
 databases:
   - name: employee-leave-db
     databaseName: employeemanagement
-    user: postgres
+    user: employeemanagement_user  
     ipAllowList: []
