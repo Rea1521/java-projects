@@ -57,9 +57,4 @@ A comprehensive cloud-hosted HR system for managing employee leave applications,
 
 ## 🔧 Installation & Setup
 
-### Local Development
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/employee-leave-management.git
-cd employee-leave-management
