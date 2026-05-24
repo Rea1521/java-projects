@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "employees")
@@ -14,8 +16,9 @@ public class Employee {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", unique = true)
-    private User user;
+@JoinColumn(name = "user_id", unique = true)
+@JsonIgnoreProperties({"employee"})
+private User user;
 
     private String firstName;
     private String lastName;
@@ -28,13 +31,16 @@ public class Employee {
 
     @ManyToOne
     @JoinColumn(name = "department_id")
+    @JsonIgnore
     private Department department;
 
     @ManyToOne
-    @JoinColumn(name = "manager_id")
-    private Employee manager;
+@JoinColumn(name = "manager_id")
+@JsonIgnore
+private Employee manager;
 
     @OneToMany(mappedBy = "employee")
+    @JsonIgnore
     private List<Leave> leaves = new ArrayList<>();
 
     private double annualLeaveBalance;
@@ -47,7 +53,7 @@ public class Employee {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ===== MANUAL GETTERS AND SETTERS =====
+    //  MANUAL GETTERS AND SETTERS 
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

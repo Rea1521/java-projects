@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login as apiLogin, getCurrentUser } from '../services/authService';
+import { login as apiLogin } from '../services/authService';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -20,29 +20,23 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      fetchCurrentUser();
-    } else {
-      setLoading(false);
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
+    setLoading(false);
   }, []);
-
-  const fetchCurrentUser = async () => {
-    try {
-      const userData = await getCurrentUser();
-      setUser(userData);
-    } catch (error) {
-      localStorage.removeItem('token');
-      toast.error('Session expired. Please login again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async (credentials) => {
     try {
       const response = await apiLogin(credentials);
       localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response));
       setUser(response);
       toast.success('Login successful!');
       navigate('/dashboard');
@@ -55,6 +49,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     navigate('/login');
     toast.info('Logged out successfully');

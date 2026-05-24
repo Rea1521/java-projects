@@ -2,7 +2,6 @@ package com.employeemanagement.config;
 
 import com.employeemanagement.model.*;
 import com.employeemanagement.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 
 @Component
-@RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
     
     private final UserRepository userRepository;

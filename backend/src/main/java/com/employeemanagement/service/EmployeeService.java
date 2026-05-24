@@ -17,4 +17,5 @@ public interface EmployeeService {
     EmployeeDTO getEmployeeByUserId(Long userId);
     Employee getEmployeeEntityById(Long id);
     boolean existsByEmail(String email);
+     Employee save(Employee employee);
 }

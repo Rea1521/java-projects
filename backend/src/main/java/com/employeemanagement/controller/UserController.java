@@ -1,6 +1,6 @@
 package com.employeemanagement.controller;
 
-import com.employeemanagement.exception.ResourceNotFoundException;  // IMPORTANT: Add this import
+import com.employeemanagement.exception.ResourceNotFoundException; 
 import com.employeemanagement.model.User;
 import com.employeemanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
+
 @RequiredArgsConstructor
 public class UserController {
     

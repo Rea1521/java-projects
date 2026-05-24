@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
@@ -13,7 +13,6 @@ const LoginSchema = Yup.object().shape({
 
 const Login = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = useState('');
 
   const handleSubmit = async (values, { setSubmitting }) => {

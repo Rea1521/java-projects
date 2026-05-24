@@ -22,7 +22,7 @@ public class Holiday {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ===== MANUAL GETTERS AND SETTERS =====
+    // MANUAL GETTERS AND SETTERS 
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

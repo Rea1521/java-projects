@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaEdit, FaArrowLeft, FaEnvelope, FaPhone, FaCalendar, FaBuilding, FaUserTie } from 'react-icons/fa';
-import { getEmployeeById } from '../../services/employeeService';
+import { getEmployeeById, getEmployeeByUserId } from '../../services/employeeService';
 import { getEmployeeLeaves } from '../../services/leaveService';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 
 const EmployeeProfile = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState(null);
   const [leaves, setLeaves] = useState([]);
@@ -20,10 +22,14 @@ const EmployeeProfile = () => {
 
   const fetchEmployeeData = async () => {
     try {
-      const [empData, leavesData] = await Promise.all([
-        getEmployeeById(id),
-        getEmployeeLeaves(id)
-      ]);
+      // If no id param (/profile route), resolve by logged-in user id
+      let empData;
+      if (id) {
+        empData = await getEmployeeById(id);
+      } else {
+        empData = await getEmployeeByUserId(user.id);
+      }
+      const leavesData = await getEmployeeLeaves(empData.id);
       setEmployee(empData);
       setLeaves(leavesData);
     } catch (error) {

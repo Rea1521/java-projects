@@ -5,6 +5,7 @@ import com.employeemanagement.exception.ResourceNotFoundException;
 import com.employeemanagement.model.Employee;
 import com.employeemanagement.model.User;
 import com.employeemanagement.repository.EmployeeRepository;
+import com.employeemanagement.repository.DepartmentRepository;
 import com.employeemanagement.repository.UserRepository;
 import com.employeemanagement.service.AuditService;
 import com.employeemanagement.service.EmployeeService;
@@ -24,6 +25,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
+    private final DepartmentRepository departmentRepository;
     private final UserService userService;
     private final AuditService auditService;
     
@@ -122,7 +124,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     
     @Override
     public boolean existsByEmail(String email) {
-        return false; // Implement if needed
+        return false; 
     }
     
     private EmployeeDTO mapToDto(Employee employee) {
@@ -144,12 +146,20 @@ public class EmployeeServiceImpl implements EmployeeService {
         dto.setDepartmentName(employee.getDepartment() != null ? employee.getDepartment().getName() : null);
         dto.setManagerId(employee.getManager() != null ? employee.getManager().getId() : null);
         dto.setManagerName(employee.getManager() != null ? employee.getManager().getFullName() : null);
+        dto.setRole(employee.getUser() != null && employee.getUser().getRole() != null 
+                ? employee.getUser().getRole().name() : null);
+        dto.setActive(employee.getUser() != null && employee.getUser().isActive());
         dto.setAnnualLeaveBalance(employee.getAnnualLeaveBalance());
         dto.setSickLeaveBalance(employee.getSickLeaveBalance());
         dto.setCasualLeaveBalance(employee.getCasualLeaveBalance());
         dto.setCreatedAt(employee.getCreatedAt());
         dto.setUpdatedAt(employee.getUpdatedAt());
         return dto;
+    }
+
+    @Override
+    public Employee save(Employee employee) {
+        return employeeRepository.save(employee);
     }
     
     private void mapDtoToEntity(EmployeeDTO dto, Employee employee) {
@@ -161,7 +171,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setAddress(dto.getAddress());
         employee.setEmergencyContact(dto.getEmergencyContact());
         employee.setEmergencyPhone(dto.getEmergencyPhone());
-        
+
+        // Set department if provided
+        if (dto.getDepartmentId() != null) {
+            departmentRepository.findById(dto.getDepartmentId())
+                    .ifPresent(employee::setDepartment);
+        }
+
+        // Set manager if provided
+        if (dto.getManagerId() != null) {
+            employeeRepository.findById(dto.getManagerId())
+                    .ifPresent(employee::setManager);
+        }
+
         if (dto.getAnnualLeaveBalance() > 0) {
             employee.setAnnualLeaveBalance(dto.getAnnualLeaveBalance());
         }

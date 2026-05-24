@@ -2,34 +2,51 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Badge, Button, Card, Row, Col, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { getMyLeaves, cancelLeave } from '../../services/leaveService';
+import { getEmployeeByUserId } from '../../services/employeeService';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import { FaEye, FaTimes, FaPlus } from 'react-icons/fa';
 import moment from 'moment';
 
 const LeaveList = () => {
+  const { user } = useAuth();
   const [leaves, setLeaves] = useState([]);
   const [filteredLeaves, setFilteredLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [employeeId, setEmployeeId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchLeaves();
+    resolveEmployeeAndFetch();
   }, []);
 
   useEffect(() => {
     filterLeaves();
   }, [statusFilter, leaves]);
 
-  const fetchLeaves = async () => {
+  const resolveEmployeeAndFetch = async () => {
     try {
-      const data = await getMyLeaves();
+      const employee = await getEmployeeByUserId(user.id);
+      setEmployeeId(employee.id);
+      const data = await getMyLeaves(employee.id);
       setLeaves(data);
       setFilteredLeaves(data);
     } catch (error) {
       toast.error('Failed to fetch leaves');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLeaves = async () => {
+    if (!employeeId) return;
+    try {
+      const data = await getMyLeaves(employeeId);
+      setLeaves(data);
+      setFilteredLeaves(data);
+    } catch (error) {
+      toast.error('Failed to fetch leaves');
     }
   };
 

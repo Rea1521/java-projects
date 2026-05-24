@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Badge, Button, Card, Modal, Form } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { getPendingLeaves, approveLeave, rejectLeave } from '../../services/leaveService';
+import { getEmployeeByUserId } from '../../services/employeeService';
 import { toast } from 'react-toastify';
-import { FaCheck, FaTimes, FaEye } from 'react-icons/fa';
+import { FaCheck, FaTimes } from 'react-icons/fa';
 import moment from 'moment';
 
 const LeaveApproval = () => {
@@ -15,19 +16,32 @@ const LeaveApproval = () => {
   const [action, setAction] = useState('');
   const [comments, setComments] = useState('');
   const [reason, setReason] = useState('');
+  const [employeeId, setEmployeeId] = useState(null);
 
   useEffect(() => {
-    fetchPendingLeaves();
+    resolveAndFetch();
   }, []);
 
-  const fetchPendingLeaves = async () => {
+  const resolveAndFetch = async () => {
     try {
-      const data = await getPendingLeaves(user.id);
+      const employee = await getEmployeeByUserId(user.id);
+      setEmployeeId(employee.id);
+      const data = await getPendingLeaves(employee.id);
       setLeaves(data);
     } catch (error) {
       toast.error('Failed to fetch pending leaves');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingLeaves = async () => {
+    if (!employeeId) return;
+    try {
+      const data = await getPendingLeaves(employeeId);
+      setLeaves(data);
+    } catch (error) {
+      toast.error('Failed to fetch pending leaves');
     }
   };
 

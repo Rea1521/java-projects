@@ -65,7 +65,7 @@ const AdminDashboard = () => {
       title: 'Leave Management',
       icon: <FaClipboardList size={30} />,
       description: 'View and manage all leave applications',
-      link: '/leaves/all',
+      link: '/leaves/pending',
       color: 'info',
       count: stats.leaves
     },
@@ -185,10 +185,10 @@ const AdminDashboard = () => {
               <ListGroup.Item action as={Link} to="/employees/new">
                 Add New Employee
               </ListGroup.Item>
-              <ListGroup.Item action as={Link} to="/departments/new">
+              <ListGroup.Item action as={Link} to="/departments">
                 Create Department
               </ListGroup.Item>
-              <ListGroup.Item action as={Link} to="/holidays/new">
+              <ListGroup.Item action as={Link} to="/holidays">
                 Add Holiday
               </ListGroup.Item>
               <ListGroup.Item action as={Link} to="/reports/analytics">

@@ -18,7 +18,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -231,24 +230,16 @@ public class LeaveServiceImpl implements LeaveService {
     public double getEmployeeLeaveBalance(Long employeeId, String leaveType) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
-        
+
         LeaveType type = LeaveType.valueOf(leaveType);
-        int currentYear = LocalDate.now().getYear();
-        
-        List<Leave> approvedLeaves = leaveRepository.findApprovedLeavesByEmployeeAndYear(
-                employee, type, currentYear);
-        
-        double takenDays = approvedLeaves.stream()
-                .mapToDouble(Leave::getNumberOfDays)
-                .sum();
-        
+
         switch (type) {
             case PAID_LEAVE:
-                return employee.getAnnualLeaveBalance() - takenDays;
+                return employee.getAnnualLeaveBalance();
             case SICK_LEAVE:
-                return employee.getSickLeaveBalance() - takenDays;
+                return employee.getSickLeaveBalance();
             case CASUAL_LEAVE:
-                return employee.getCasualLeaveBalance() - takenDays;
+                return employee.getCasualLeaveBalance();
             default:
                 return 0;
         }

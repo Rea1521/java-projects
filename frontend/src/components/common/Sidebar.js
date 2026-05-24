@@ -33,13 +33,19 @@ const Sidebar = () => {
       path: '/leaves/apply',
       icon: <FaCalendarAlt />,
       label: 'Apply Leave',
-      roles: ['EMPLOYEE']
+      roles: ['EMPLOYEE', 'MANAGER']
     },
     {
-      path: '/leaves/my-leaves',
+      path: '/leaves',
       icon: <FaClipboardList />,
       label: 'My Leaves',
-      roles: ['EMPLOYEE']
+      roles: ['EMPLOYEE', 'MANAGER']
+    },
+    {
+      path: '/leaves/balance',
+      icon: <FaCalendarAlt />,
+      label: 'Leave Balance',
+      roles: ['EMPLOYEE', 'MANAGER']
     },
     {
       path: '/leaves/pending',
@@ -51,7 +57,7 @@ const Sidebar = () => {
       path: '/employees',
       icon: <FaUsers />,
       label: 'Employees',
-      roles: ['ADMIN']
+      roles: ['ADMIN', 'MANAGER']
     },
     {
       path: '/employees/new',
@@ -69,13 +75,19 @@ const Sidebar = () => {
       path: '/holidays',
       icon: <FaSun />,
       label: 'Holidays',
-      roles: ['ADMIN']
+      roles: ['ADMIN', 'MANAGER', 'EMPLOYEE']
     },
     {
       path: '/reports/analytics',
       icon: <FaChartBar />,
       label: 'Analytics',
       roles: ['ADMIN', 'MANAGER']
+    },
+    {
+      path: '/reports/audit',
+      icon: <FaClipboardList />,
+      label: 'Audit Logs',
+      roles: ['ADMIN']
     }
   ];
 

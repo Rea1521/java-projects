@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/leaves")
-@CrossOrigin(origins = "*")
+
 @RequiredArgsConstructor
 public class LeaveController {
     
@@ -63,6 +63,13 @@ public class LeaveController {
         return ResponseEntity.ok(leaves);
     }
     
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllLeaves() {
+        List<LeaveResponse> leaves = leaveService.getAllLeaves();
+        return ResponseEntity.ok(leaves);
+    }
+
     @GetMapping("/{leaveId}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
     public ResponseEntity<?> getLeaveById(@PathVariable Long leaveId) {

@@ -3,6 +3,7 @@ import { Container, Table, Button, Card, Modal, Form, Badge } from 'react-bootst
 import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { getAllDepartments, createDepartment, updateDepartment, deleteDepartment } from '../../services/departmentService';
+import { getAllEmployees } from '../../services/employeeService';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -13,13 +14,24 @@ const DepartmentSchema = Yup.object().shape({
 
 const DepartmentList = () => {
   const [departments, setDepartments] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
 
   useEffect(() => {
     fetchDepartments();
+    fetchManagers();
   }, []);
+
+  const fetchManagers = async () => {
+    try {
+      const data = await getAllEmployees();
+      setManagers(data.filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN'));
+    } catch (error) {
+      console.error('Failed to fetch managers');
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -204,7 +216,11 @@ const DepartmentList = () => {
                     onBlur={handleBlur}
                   >
                     <option value="">Select Manager</option>
-                    {/* Add manager options here */}
+                    {managers.map(emp => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.firstName} {emp.lastName} — {emp.role}
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Modal.Body>

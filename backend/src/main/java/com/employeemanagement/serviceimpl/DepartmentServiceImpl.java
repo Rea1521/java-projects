@@ -5,7 +5,7 @@ import com.employeemanagement.dto.EmployeeDTO;
 import com.employeemanagement.exception.ResourceNotFoundException;
 import com.employeemanagement.model.Department;
 import com.employeemanagement.model.Employee;
-import com.employeemanagement.model.User;  // ADD THIS IMPORT
+import com.employeemanagement.model.User;  
 import com.employeemanagement.repository.DepartmentRepository;
 import com.employeemanagement.repository.EmployeeRepository;
 import com.employeemanagement.service.AuditService;

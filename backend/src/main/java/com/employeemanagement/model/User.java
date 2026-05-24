@@ -2,6 +2,7 @@ package com.employeemanagement.model;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users")
@@ -31,9 +32,10 @@ public class User {
     private LocalDateTime updatedAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Employee employee;
+@JsonIgnore
+private Employee employee;
 
-    // ===== MANUAL GETTERS AND SETTERS =====
+    
     
     // Getters
     public Long getId() { return id; }

@@ -1,16 +1,14 @@
 import React from 'react';
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaSignOutAlt, FaTachometerAlt } from 'react-icons/fa';
 
 const AppNavbar = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
   };
 
   return (
@@ -30,7 +28,7 @@ const AppNavbar = () => {
             {user?.role === 'EMPLOYEE' && (
               <>
                 <Nav.Link as={Link} to="/leaves/apply">Apply Leave</Nav.Link>
-                <Nav.Link as={Link} to="/leaves/my-leaves">My Leaves</Nav.Link>
+                <Nav.Link as={Link} to="/leaves">My Leaves</Nav.Link>
               </>
             )}
             

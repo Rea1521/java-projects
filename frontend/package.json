@@ -16,9 +16,7 @@
     "react-chartjs-2": "^5.2.0",
     "formik": "^2.4.2",
     "yup": "^1.2.0",
-    "moment": "^2.29.4",
-    "@reduxjs/toolkit": "^1.9.5",
-    "react-redux": "^8.1.1"
+    "moment": "^2.29.4"
   },
   "scripts": {
     "start": "react-scripts start",

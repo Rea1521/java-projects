@@ -5,7 +5,7 @@ import { FaUsers, FaClipboardList, FaChartBar, FaCheckCircle, FaClock } from 're
 import { useAuth } from '../../context/AuthContext';
 import { getEmployeesByManager } from '../../services/employeeService';
 import { getManagerPendingLeaves } from '../../services/leaveService';
-import { getDepartmentEmployees } from '../../services/departmentService';
+import { getEmployeeByUserId } from '../../services/employeeService';
 import moment from 'moment';
 
 const ManagerDashboard = () => {
@@ -25,8 +25,8 @@ const ManagerDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Assuming we have the manager's employee ID
-      const managerId = 1; // This should come from user context
+      const employee = await getEmployeeByUserId(user.id);
+      const managerId = employee.id;
       const [team, pendingLeaves] = await Promise.all([
         getEmployeesByManager(managerId),
         getManagerPendingLeaves(managerId)
@@ -169,13 +169,13 @@ const ManagerDashboard = () => {
               <ListGroup.Item action as={Link} to="/leaves/pending">
                 View Pending Approvals
               </ListGroup.Item>
-              <ListGroup.Item action as={Link} to="/team/schedule">
-                Team Schedule
+              <ListGroup.Item action as={Link} to="/employees">
+                Team Members
               </ListGroup.Item>
               <ListGroup.Item action as={Link} to="/reports/analytics">
                 Team Analytics
               </ListGroup.Item>
-              <ListGroup.Item action as={Link} to="/team/attendance">
+              <ListGroup.Item action as={Link} to="/reports/analytics">
                 Attendance Report
               </ListGroup.Item>
             </ListGroup>

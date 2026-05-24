@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, ProgressBar, Table } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { getLeaveBalance, getMyLeaves } from '../../services/leaveService';
+import { getLeaveBalance, getEmployeeLeaves } from '../../services/leaveService';
+import { getEmployeeByUserId } from '../../services/employeeService';
 import { FaCalendarAlt, FaHeartbeat, FaUmbrellaBeach } from 'react-icons/fa';
 import moment from 'moment';
 
@@ -21,11 +22,14 @@ const LeaveBalance = () => {
 
   const fetchLeaveData = async () => {
     try {
+      const employee = await getEmployeeByUserId(user.id);
+      const empId = employee.id;
+
       const [leaves, paidBalance, sickBalance, casualBalance] = await Promise.all([
-        getMyLeaves(),
-        getLeaveBalance(user.id, 'PAID_LEAVE'),
-        getLeaveBalance(user.id, 'SICK_LEAVE'),
-        getLeaveBalance(user.id, 'CASUAL_LEAVE')
+        getEmployeeLeaves(empId),
+        getLeaveBalance(empId, 'PAID_LEAVE'),
+        getLeaveBalance(empId, 'SICK_LEAVE'),
+        getLeaveBalance(empId, 'CASUAL_LEAVE')
       ]);
 
       // Calculate used leaves

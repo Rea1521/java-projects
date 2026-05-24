@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { FaCalendarAlt, FaCheckCircle, FaClock, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { getMyLeaves, getLeaveBalance } from '../../services/leaveService';
+import { getEmployeeByUserId } from '../../services/employeeService';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -40,11 +41,14 @@ const EmployeeDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      const employee = await getEmployeeByUserId(user.id);
+      const empId = employee.id;
+
       const [leavesData, paidBalance, sickBalance, casualBalance] = await Promise.all([
-        getMyLeaves(),
-        getLeaveBalance(user.id, 'PAID_LEAVE'),
-        getLeaveBalance(user.id, 'SICK_LEAVE'),
-        getLeaveBalance(user.id, 'CASUAL_LEAVE')
+        getMyLeaves(empId),
+        getLeaveBalance(empId, 'PAID_LEAVE'),
+        getLeaveBalance(empId, 'SICK_LEAVE'),
+        getLeaveBalance(empId, 'CASUAL_LEAVE')
       ]);
       
       setLeaves(leavesData);
@@ -213,7 +217,7 @@ const EmployeeDashboard = () => {
                 <ListGroup.Item action as={Link} to="/leaves/apply">
                   Apply for Leave
                 </ListGroup.Item>
-                <ListGroup.Item action as={Link} to="/leaves/my-leaves">
+                <ListGroup.Item action as={Link} to="/leaves">
                   View My Leaves
                 </ListGroup.Item>
                 <ListGroup.Item action as={Link} to="/holidays">

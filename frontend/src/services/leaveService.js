@@ -5,8 +5,9 @@ export const applyForLeave = async (leaveData) => {
   return response.data;
 };
 
-export const getMyLeaves = async () => {
-  const response = await api.get('/leaves/my-leaves');
+// Fetch leaves for a specific employee by their employee ID
+export const getMyLeaves = async (employeeId) => {
+  const response = await api.get(`/leaves/employee/${employeeId}`);
   return response.data;
 };
 
@@ -20,13 +21,12 @@ export const getPendingLeaves = async (managerId) => {
   return response.data;
 };
 
-// ADD THIS FUNCTION - for managers to get pending leaves under them
 export const getManagerPendingLeaves = async (managerId) => {
   const response = await api.get(`/leaves/pending/manager/${managerId}`);
   return response.data;
 };
 
-// ADD THIS FUNCTION - for admin to get all leaves
+// Admin: get all leaves (backend uses /leaves endpoint - no /all)
 export const getAllLeaves = async () => {
   const response = await api.get('/leaves/all');
   return response.data;

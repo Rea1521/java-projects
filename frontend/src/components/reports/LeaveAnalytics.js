@@ -293,7 +293,7 @@ const LeaveAnalytics = () => {
                   scales: {
                     y: {
                       beginAtZero: true,
-                      stepSize: 1
+                      ticks: { stepSize: 1 }
                     }
                   }
                 }}

@@ -6,6 +6,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
 import { applyForLeave, getLeaveBalance } from '../../services/leaveService';
+import { getEmployeeByUserId } from '../../services/employeeService';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import moment from 'moment';
@@ -26,26 +27,28 @@ const LeaveApplication = () => {
   const navigate = useNavigate();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(true);
+  const [employeeId, setEmployeeId] = useState(null);
 
   useEffect(() => {
-    fetchBalances();
+    resolveEmployeeAndFetchBalances();
   }, []);
 
-  const fetchBalances = async () => {
+  const resolveEmployeeAndFetchBalances = async () => {
     try {
+      const employee = await getEmployeeByUserId(user.id);
+      setEmployeeId(employee.id);
       const [paid, sick, casual] = await Promise.all([
-        getLeaveBalance(user.id, 'PAID_LEAVE'),
-        getLeaveBalance(user.id, 'SICK_LEAVE'),
-        getLeaveBalance(user.id, 'CASUAL_LEAVE')
+        getLeaveBalance(employee.id, 'PAID_LEAVE'),
+        getLeaveBalance(employee.id, 'SICK_LEAVE'),
+        getLeaveBalance(employee.id, 'CASUAL_LEAVE')
       ]);
-      
       setBalances({
         PAID_LEAVE: paid,
         SICK_LEAVE: sick,
         CASUAL_LEAVE: casual
       });
     } catch (error) {
-      console.error('Error fetching balances:', error);
+      toast.error('Failed to load leave balances');
     } finally {
       setLoading(false);
     }
@@ -79,7 +82,7 @@ const LeaveApplication = () => {
       await applyForLeave(leaveData);
       toast.success('Leave application submitted successfully!');
       resetForm();
-      navigate('/leaves/my-leaves');
+      navigate('/leaves');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit leave application');
     } finally {

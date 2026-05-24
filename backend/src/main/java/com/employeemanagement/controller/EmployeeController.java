@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/employees")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class EmployeeController {
     
@@ -25,7 +24,7 @@ public class EmployeeController {
     }
     
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or @employeeService.getEmployeeById(#id).get().userId == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
         return employeeService.getEmployeeById(id)
                 .map(ResponseEntity::ok)
@@ -33,7 +32,7 @@ public class EmployeeController {
     }
     
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     public ResponseEntity<EmployeeDTO> getEmployeeByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(employeeService.getEmployeeByUserId(userId));
     }

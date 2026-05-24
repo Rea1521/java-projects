@@ -2,7 +2,7 @@ package com.employeemanagement.serviceimpl;
 
 import com.employeemanagement.exception.ResourceNotFoundException;
 import com.employeemanagement.model.Holiday;
-import com.employeemanagement.model.User;  // IMPORTANT: Add this import
+import com.employeemanagement.model.User;  
 import com.employeemanagement.repository.HolidayRepository;
 import com.employeemanagement.service.AuditService;
 import com.employeemanagement.service.HolidayService;

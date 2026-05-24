@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap'
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createEmployee, getEmployeeById, updateEmployee } from '../../services/employeeService';
+import { createEmployee, getEmployeeById, updateEmployee, getAllEmployees } from '../../services/employeeService';
 import { getAllDepartments } from '../../services/departmentService';
 import { toast } from 'react-toastify';
 
@@ -51,10 +51,20 @@ const EmployeeForm = () => {
 
   useEffect(() => {
     fetchDepartments();
+    fetchManagers();
     if (id) {
       fetchEmployee();
     }
   }, [id]);
+
+  const fetchManagers = async () => {
+    try {
+      const data = await getAllEmployees();
+      setManagers(data.filter(emp => emp.role === 'MANAGER' || emp.role === 'ADMIN'));
+    } catch (error) {
+      toast.error('Failed to fetch managers');
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -245,6 +255,27 @@ const EmployeeForm = () => {
                           </Field>
                         </Form.Group>
                       </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Manager</Form.Label>
+                          <Field
+                            as="select"
+                            name="managerId"
+                            className="form-control"
+                          >
+                            <option value="">No Manager</option>
+                            {managers.map(emp => (
+                              <option key={emp.id} value={emp.id}>
+                                {emp.firstName} {emp.lastName} — {emp.role}
+                              </option>
+                            ))}
+                          </Field>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+
+                   
+                    <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>Role</Form.Label>

@@ -38,8 +38,9 @@ public class AuditServiceImpl implements AuditService {
     
     @Override
     public List<AuditLog> getUserAuditLogs(Long userId) {
-        // Implement if needed
-        return null;
+        return auditLogRepository.findAll().stream()
+                .filter(log -> log.getUser() != null && log.getUser().getId().equals(userId))
+                .collect(java.util.stream.Collectors.toList());
     }
     
     @Override
