@@ -76,6 +76,15 @@ public class AuthController {
 
         employeeService.save(employee);
 
-        return ResponseEntity.ok(savedUser);
+        // Return a safe DTO — never return raw entities with bidirectional relationships
+        String jwt = userService.generateTokenForUser(savedUser);
+        LoginResponse response = new LoginResponse(
+                jwt,
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getEmail(),
+                savedUser.getRole()
+        );
+        return ResponseEntity.ok(response);
     }
 }

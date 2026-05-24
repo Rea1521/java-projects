@@ -13,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,18 +29,6 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-                .roles(user.getRole().name())
-                .build();
-    }
     
     @Override
     public LoginResponse authenticateUser(LoginRequest loginRequest) {
@@ -122,5 +109,20 @@ public class UserServiceImpl implements UserService {
         String username = authentication.getName();
         return findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
+    }
+
+    @Override
+    public String generateTokenForUser(User user) {
+        // Build a UserDetails principal and generate a JWT directly, without re-authenticating
+        org.springframework.security.core.userdetails.UserDetails principal =
+                org.springframework.security.core.userdetails.User.builder()
+                        .username(user.getUsername())
+                        .password(user.getPassword())
+                        .roles(user.getRole().name())
+                        .build();
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken auth =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        principal, null, principal.getAuthorities());
+        return jwtUtils.generateJwtToken(auth);
     }
 }

@@ -51,6 +51,7 @@ public class SecurityConfig {
     .csrf().disable()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .authorizeRequests()
+                .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/api/public/**").permitAll()
                 .antMatchers("/actuator/health").permitAll()
@@ -66,14 +67,15 @@ public class SecurityConfig {
 public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowedOriginPatterns(List.of(
-            "http://localhost:3000",
-            "http://localhost:5173"
-    ));
+    // Allow any localhost port - covers :3000, :3001, :5173, :8081, etc.
+    config.addAllowedOriginPattern("http://localhost:*");
+    config.addAllowedOriginPattern("http://127.0.0.1:*");
 
-    config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     config.setAllowedHeaders(List.of("*"));
+    config.setExposedHeaders(List.of("Authorization"));
     config.setAllowCredentials(true);
+    config.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);

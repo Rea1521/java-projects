@@ -1,5 +1,6 @@
 package com.employeemanagement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -19,9 +20,11 @@ public class Department {
 
     @ManyToOne
     @JoinColumn(name = "manager_id")
+    @JsonIgnore
     private Employee departmentManager;
 
     @OneToMany(mappedBy = "department")
+    @JsonIgnore
     private List<Employee> employees = new ArrayList<>();
 
     @Column(name = "created_at")
