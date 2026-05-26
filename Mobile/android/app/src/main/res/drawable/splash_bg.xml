@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash screen: gradient background with centered icon + wordmark -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:opacity="opaque">
+
+    <!-- 1. Full-screen gradient background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#4F46E5"
+                android:centerColor="#6135CC"
+                android:endColor="#7C3AED"
+                android:angle="135"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- 2. Subtle radial glow in top-left corner -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#33FFFFFF" />
+            <size android:width="300dp" android:height="300dp" />
+        </shape>
+        <bitmap
+            android:gravity="top|left"
+            android:tileMode="disabled" />
+    </item>
+
+    <!-- 3. App icon centered on screen -->
+    <item
+        android:gravity="center"
+        android:bottom="80dp">
+        <bitmap
+            android:src="@drawable/splash_icon"
+            android:gravity="center"
+            android:tileMode="disabled" />
+    </item>
+
+</layer-list>

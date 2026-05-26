@@ -83,8 +83,8 @@ public class LeaveServiceImpl implements LeaveService {
         Employee manager = employeeRepository.findByUser(currentUser)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found"));
         
-        if (currentUser.getRole() != Role.ADMIN && 
-            !leave.getEmployee().getManager().equals(manager)) {
+        if (currentUser.getRole() != Role.ADMIN &&
+            (leave.getEmployee().getManager() == null || !leave.getEmployee().getManager().equals(manager))) {
             throw new UnauthorizedException("You are not authorized to approve this leave");
         }
         
@@ -133,8 +133,8 @@ public class LeaveServiceImpl implements LeaveService {
         Employee manager = employeeRepository.findByUser(currentUser)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found"));
         
-        if (currentUser.getRole() != Role.ADMIN && 
-            !leave.getEmployee().getManager().equals(manager)) {
+        if (currentUser.getRole() != Role.ADMIN &&
+            (leave.getEmployee().getManager() == null || !leave.getEmployee().getManager().equals(manager))) {
             throw new UnauthorizedException("You are not authorized to reject this leave");
         }
         
@@ -257,6 +257,9 @@ public class LeaveServiceImpl implements LeaveService {
         response.setId(leave.getId());
         response.setEmployeeId(leave.getEmployee().getId());
         response.setEmployeeName(leave.getEmployee().getFullName());
+        // Safely set department name — employee may have no department
+        response.setDepartment(leave.getEmployee().getDepartment() != null
+                ? leave.getEmployee().getDepartment().getName() : null);
         response.setLeaveType(leave.getLeaveType());
         response.setStartDate(leave.getStartDate());
         response.setEndDate(leave.getEndDate());
@@ -264,15 +267,15 @@ public class LeaveServiceImpl implements LeaveService {
         response.setReason(leave.getReason());
         response.setStatus(leave.getStatus());
         response.setComments(leave.getComments());
-        
+
         if (leave.getApprovedBy() != null) {
             response.setApprovedBy(leave.getApprovedBy().getFullName());
             response.setApprovalDate(leave.getApprovalDate());
         }
-        
+
         response.setRejectionReason(leave.getRejectionReason());
         response.setCreatedAt(leave.getCreatedAt());
-        
+
         return response;
     }
 }

@@ -9,6 +9,7 @@ public class EmployeeDTO {
     private Long id;
     private Long userId;
     private String username;
+    private String password;   // ← used only when admin creates a new employee
     private String email;
     private String firstName;
     private String lastName;

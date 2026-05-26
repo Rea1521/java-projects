@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -13,9 +13,10 @@ import moment from 'moment';
 
 const LeaveSchema = Yup.object().shape({
   leaveType: Yup.string().required('Leave type is required'),
-  startDate: Yup.date().required('Start date is required'),
+  startDate: Yup.date().required('Start date is required').nullable(),
   endDate: Yup.date()
     .required('End date is required')
+    .nullable()
     .min(Yup.ref('startDate'), 'End date cannot be before start date'),
   reason: Yup.string()
     .required('Reason is required')
@@ -25,9 +26,10 @@ const LeaveSchema = Yup.object().shape({
 const LeaveApplication = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [balances, setBalances] = useState({});
+  const [balances, setBalances] = useState({ PAID_LEAVE: 0, SICK_LEAVE: 0, CASUAL_LEAVE: 0 });
   const [loading, setLoading] = useState(true);
   const [employeeId, setEmployeeId] = useState(null);
+  const submitRef = useRef(null);
 
   useEffect(() => {
     resolveEmployeeAndFetchBalances();
@@ -40,13 +42,9 @@ const LeaveApplication = () => {
       const [paid, sick, casual] = await Promise.all([
         getLeaveBalance(employee.id, 'PAID_LEAVE'),
         getLeaveBalance(employee.id, 'SICK_LEAVE'),
-        getLeaveBalance(employee.id, 'CASUAL_LEAVE')
+        getLeaveBalance(employee.id, 'CASUAL_LEAVE'),
       ]);
-      setBalances({
-        PAID_LEAVE: paid,
-        SICK_LEAVE: sick,
-        CASUAL_LEAVE: casual
-      });
+      setBalances({ PAID_LEAVE: paid, SICK_LEAVE: sick, CASUAL_LEAVE: casual });
     } catch (error) {
       toast.error('Failed to load leave balances');
     } finally {
@@ -56,30 +54,31 @@ const LeaveApplication = () => {
 
   const calculateDays = (startDate, endDate) => {
     if (!startDate || !endDate) return 0;
-    const start = moment(startDate);
-    const end = moment(endDate);
-    return end.diff(start, 'days') + 1;
+    return moment(endDate).diff(moment(startDate), 'days') + 1;
   };
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
       const days = calculateDays(values.startDate, values.endDate);
-      
-      // Check if enough balance
+
       if (values.leaveType !== 'UNPAID_LEAVE') {
-        const balance = balances[values.leaveType];
+        const balance = balances[values.leaveType] || 0;
         if (days > balance) {
           toast.error(`Insufficient balance. Available: ${balance} days`);
+          setSubmitting(false);
           return;
         }
       }
 
-      const leaveData = {
-        ...values,
-        numberOfDays: days
-      };
+      await applyForLeave({
+        employeeId,                          // ← was missing before
+        leaveType: values.leaveType,
+        startDate: moment(values.startDate).format('YYYY-MM-DD'),
+        endDate: moment(values.endDate).format('YYYY-MM-DD'),
+        reason: values.reason,
+        numberOfDays: days,
+      });
 
-      await applyForLeave(leaveData);
       toast.success('Leave application submitted successfully!');
       resetForm();
       navigate('/leaves');
@@ -103,23 +102,17 @@ const LeaveApplication = () => {
                 <Row className="mb-4">
                   <Col md={4}>
                     <Alert variant="info">
-                      <strong>Paid Leave</strong>
-                      <br />
-                      Balance: {balances.PAID_LEAVE} days
+                      <strong>Paid Leave</strong><br />Balance: {balances.PAID_LEAVE} days
                     </Alert>
                   </Col>
                   <Col md={4}>
                     <Alert variant="warning">
-                      <strong>Sick Leave</strong>
-                      <br />
-                      Balance: {balances.SICK_LEAVE} days
+                      <strong>Sick Leave</strong><br />Balance: {balances.SICK_LEAVE} days
                     </Alert>
                   </Col>
                   <Col md={4}>
                     <Alert variant="success">
-                      <strong>Casual Leave</strong>
-                      <br />
-                      Balance: {balances.CASUAL_LEAVE} days
+                      <strong>Casual Leave</strong><br />Balance: {balances.CASUAL_LEAVE} days
                     </Alert>
                   </Col>
                 </Row>
@@ -130,96 +123,99 @@ const LeaveApplication = () => {
                   leaveType: '',
                   startDate: null,
                   endDate: null,
-                  reason: ''
+                  reason: '',
                 }}
                 validationSchema={LeaveSchema}
                 onSubmit={handleSubmit}
               >
-                {({ values, setFieldValue, isSubmitting, errors, touched }) => (
-                  <Form>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Leave Type *</Form.Label>
-                      <Field
-                        as="select"
-                        name="leaveType"
-                        className={`form-control ${touched.leaveType && errors.leaveType ? 'is-invalid' : ''}`}
-                      >
-                        <option value="">Select leave type</option>
-                        <option value="PAID_LEAVE">Paid Leave</option>
-                        <option value="SICK_LEAVE">Sick Leave</option>
-                        <option value="CASUAL_LEAVE">Casual Leave</option>
-                        <option value="UNPAID_LEAVE">Unpaid Leave</option>
-                      </Field>
-                      <ErrorMessage name="leaveType" component="div" className="invalid-feedback" />
-                    </Form.Group>
+                {({ values, setFieldValue, isSubmitting, errors, touched, submitForm }) => {
+                  submitRef.current = submitForm;
+                  return (
+                    /* Plain <form> — NOT Formik's <Form> or Bootstrap's <Form>
+                       Those intercept onSubmit and cause a page reload */
+                    <form onSubmit={e => e.preventDefault()} noValidate>
 
-                    <Row>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>Start Date *</Form.Label>
-                          <DatePicker
-                            selected={values.startDate}
-                            onChange={(date) => setFieldValue('startDate', date)}
-                            minDate={new Date()}
-                            className={`form-control ${touched.startDate && errors.startDate ? 'is-invalid' : ''}`}
-                            placeholderText="Select start date"
-                            dateFormat="yyyy-MM-dd"
-                          />
-                          <ErrorMessage name="startDate" component="div" className="invalid-feedback" />
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group className="mb-3">
-                          <Form.Label>End Date *</Form.Label>
-                          <DatePicker
-                            selected={values.endDate}
-                            onChange={(date) => setFieldValue('endDate', date)}
-                            minDate={values.startDate || new Date()}
-                            className={`form-control ${touched.endDate && errors.endDate ? 'is-invalid' : ''}`}
-                            placeholderText="Select end date"
-                            dateFormat="yyyy-MM-dd"
-                          />
-                          <ErrorMessage name="endDate" component="div" className="invalid-feedback" />
-                        </Form.Group>
-                      </Col>
-                    </Row>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Leave Type *</Form.Label>
+                        <Field
+                          as="select"
+                          name="leaveType"
+                          className={`form-control ${touched.leaveType && errors.leaveType ? 'is-invalid' : ''}`}
+                        >
+                          <option value="">Select leave type</option>
+                          <option value="PAID_LEAVE">Paid Leave</option>
+                          <option value="SICK_LEAVE">Sick Leave</option>
+                          <option value="CASUAL_LEAVE">Casual Leave</option>
+                          <option value="UNPAID_LEAVE">Unpaid Leave</option>
+                        </Field>
+                        <ErrorMessage name="leaveType" component="div" className="invalid-feedback" />
+                      </Form.Group>
 
-                    {values.startDate && values.endDate && (
-                      <Alert variant="secondary">
-                        Total Days: {calculateDays(values.startDate, values.endDate)}
-                      </Alert>
-                    )}
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Start Date *</Form.Label>
+                            <DatePicker
+                              selected={values.startDate}
+                              onChange={date => setFieldValue('startDate', date)}
+                              minDate={new Date()}
+                              className={`form-control ${touched.startDate && errors.startDate ? 'is-invalid' : ''}`}
+                              placeholderText="Select start date"
+                              dateFormat="yyyy-MM-dd"
+                            />
+                            <ErrorMessage name="startDate" component="div" className="invalid-feedback d-block" />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>End Date *</Form.Label>
+                            <DatePicker
+                              selected={values.endDate}
+                              onChange={date => setFieldValue('endDate', date)}
+                              minDate={values.startDate || new Date()}
+                              className={`form-control ${touched.endDate && errors.endDate ? 'is-invalid' : ''}`}
+                              placeholderText="Select end date"
+                              dateFormat="yyyy-MM-dd"
+                            />
+                            <ErrorMessage name="endDate" component="div" className="invalid-feedback d-block" />
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
-                    <Form.Group className="mb-3">
-                      <Form.Label>Reason *</Form.Label>
-                      <Field
-                        as="textarea"
-                        name="reason"
-                        rows="4"
-                        className={`form-control ${touched.reason && errors.reason ? 'is-invalid' : ''}`}
-                        placeholder="Please provide a detailed reason for your leave"
-                      />
-                      <ErrorMessage name="reason" component="div" className="invalid-feedback" />
-                    </Form.Group>
+                      {values.startDate && values.endDate && (
+                        <Alert variant="secondary">
+                          Total Days: {calculateDays(values.startDate, values.endDate)}
+                        </Alert>
+                      )}
 
-                    <div className="d-grid gap-2">
-                      <Button 
-                        variant="primary" 
-                        type="submit" 
-                        size="lg"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => navigate('/dashboard')}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </Form>
-                )}
+                      <Form.Group className="mb-3">
+                        <Form.Label>Reason *</Form.Label>
+                        <Field
+                          as="textarea"
+                          name="reason"
+                          rows="4"
+                          className={`form-control ${touched.reason && errors.reason ? 'is-invalid' : ''}`}
+                          placeholder="Please provide a detailed reason for your leave"
+                        />
+                        <ErrorMessage name="reason" component="div" className="invalid-feedback" />
+                      </Form.Group>
+
+                      <div className="d-grid gap-2">
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          disabled={isSubmitting || loading}
+                          onClick={() => submitRef.current && submitRef.current()}
+                        >
+                          {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                        </Button>
+                        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  );
+                }}
               </Formik>
             </Card.Body>
           </Card>

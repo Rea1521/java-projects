@@ -11,6 +11,7 @@ public class LeaveResponse {
     private Long id;
     private Long employeeId;
     private String employeeName;
+    private String department;      // ← was missing, caused N/A in table
     private LeaveType leaveType;
     private LocalDate startDate;
     private LocalDate endDate;

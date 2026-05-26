@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Table, Badge, Button, Card, Modal, Form } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { getPendingLeaves, approveLeave, rejectLeave } from '../../services/leaveService';
@@ -9,41 +9,45 @@ import moment from 'moment';
 
 const LeaveApproval = () => {
   const { user } = useAuth();
-  const [leaves, setLeaves] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [leaves, setLeaves]               = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [showModal, setShowModal]         = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
-  const [action, setAction] = useState('');
-  const [comments, setComments] = useState('');
-  const [reason, setReason] = useState('');
-  const [employeeId, setEmployeeId] = useState(null);
+  const [action, setAction]               = useState('');
+  const [comments, setComments]           = useState('');
+  const [reason, setReason]               = useState('');
+  // Store employeeId in a ref AND state so fetchPendingLeaves always
+  // has the current value without a stale-closure problem
+  const [managerId, setManagerId]         = useState(null);
+  const managerIdRef = React.useRef(null);
 
-  useEffect(() => {
-    resolveAndFetch();
-  }, []);
+  useEffect(() => { resolveAndFetch(); }, []);
 
   const resolveAndFetch = async () => {
     try {
       const employee = await getEmployeeByUserId(user.id);
-      setEmployeeId(employee.id);
+      managerIdRef.current = employee.id;
+      setManagerId(employee.id);
       const data = await getPendingLeaves(employee.id);
       setLeaves(data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch pending leaves');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPendingLeaves = async () => {
-    if (!employeeId) return;
+  // Use the ref so this function never closes over a stale managerId
+  const fetchPendingLeaves = useCallback(async () => {
+    const id = managerIdRef.current;
+    if (!id) return;
     try {
-      const data = await getPendingLeaves(employeeId);
+      const data = await getPendingLeaves(id);
       setLeaves(data);
-    } catch (error) {
-      toast.error('Failed to fetch pending leaves');
+    } catch {
+      toast.error('Failed to refresh leaves');
     }
-  };
+  }, []);
 
   const handleApprove = async () => {
     try {
@@ -51,23 +55,23 @@ const LeaveApproval = () => {
       toast.success('Leave approved successfully');
       handleCloseModal();
       fetchPendingLeaves();
-    } catch (error) {
-      toast.error('Failed to approve leave');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve leave');
     }
   };
 
   const handleReject = async () => {
-    if (!reason) {
-      toast.error('Please provide a reason for rejection');
+    if (!reason.trim()) {
+      toast.error('Please provide a rejection reason');
       return;
     }
     try {
       await rejectLeave(selectedLeave.id, reason);
-      toast.success('Leave rejected successfully');
+      toast.success('Leave rejected');
       handleCloseModal();
       fetchPendingLeaves();
-    } catch (error) {
-      toast.error('Failed to reject leave');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reject leave');
     }
   };
 
@@ -87,83 +91,55 @@ const LeaveApproval = () => {
     setReason('');
   };
 
-  const handleSubmit = () => {
-    if (action === 'approve') {
-      handleApprove();
-    } else {
-      handleReject();
-    }
-  };
-
   const getStatusBadge = (status) => {
-    const variants = {
-      PENDING: 'warning',
-      APPROVED: 'success',
-      REJECTED: 'danger',
-      CANCELLED: 'secondary'
-    };
-    return <Badge bg={variants[status] || 'primary'}>{status}</Badge>;
+    const map = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger', CANCELLED: 'secondary' };
+    return <Badge bg={map[status] || 'secondary'}>{status}</Badge>;
   };
 
   return (
     <Container fluid>
       <h2 className="mb-4">Pending Leave Approvals</h2>
-
       <Card>
         <Card.Body>
           {loading ? (
-            <div className="text-center py-4">Loading...</div>
+            <div className="text-center py-4">
+              <div className="spinner-border text-primary" />
+            </div>
           ) : (
             <Table striped bordered hover responsive>
               <thead>
                 <tr>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Leave Type</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Days</th>
-                  <th>Reason</th>
-                  <th>Applied On</th>
-                  <th>Actions</th>
+                  <th>Employee</th><th>Department</th><th>Leave Type</th>
+                  <th>Start</th><th>End</th><th>Days</th>
+                  <th>Reason</th><th>Applied On</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {leaves.map(leave => (
-                  <tr key={leave.id}>
-                    <td>{leave.employeeName}</td>
-                    <td>{leave.department || 'N/A'}</td>
-                    <td>{leave.leaveType.replace('_', ' ')}</td>
-                    <td>{moment(leave.startDate).format('DD/MM/YYYY')}</td>
-                    <td>{moment(leave.endDate).format('DD/MM/YYYY')}</td>
-                    <td>{leave.numberOfDays}</td>
-                    <td>{leave.reason}</td>
-                    <td>{moment(leave.createdAt).format('DD/MM/YYYY')}</td>
-                    <td>
-                      <Button 
-                        variant="success" 
-                        size="sm" 
-                        className="me-2"
-                        onClick={() => handleOpenModal(leave, 'approve')}
-                      >
-                        <FaCheck />
-                      </Button>
-                      <Button 
-                        variant="danger" 
-                        size="sm"
-                        onClick={() => handleOpenModal(leave, 'reject')}
-                      >
-                        <FaTimes />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {leaves.length === 0 && (
-                  <tr>
-                    <td colSpan="9" className="text-center py-4">
-                      No pending leave applications
-                    </td>
-                  </tr>
+                {leaves.length === 0 ? (
+                  <tr><td colSpan="9" className="text-center py-4">No pending applications</td></tr>
+                ) : (
+                  leaves.map(leave => (
+                    <tr key={leave.id}>
+                      <td>{leave.employeeName}</td>
+                      <td>{leave.department || 'N/A'}</td>
+                      <td>{leave.leaveType?.replace(/_/g, ' ')}</td>
+                      <td>{moment(leave.startDate).format('DD/MM/YYYY')}</td>
+                      <td>{moment(leave.endDate).format('DD/MM/YYYY')}</td>
+                      <td>{leave.numberOfDays}</td>
+                      <td>{leave.reason}</td>
+                      <td>{leave.createdAt ? moment(leave.createdAt).format('DD/MM/YYYY') : '—'}</td>
+                      <td>
+                        <Button variant="success" size="sm" className="me-2"
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(leave, 'approve'); }}>
+                          <FaCheck /> Approve
+                        </Button>
+                        <Button variant="danger" size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(leave, 'reject'); }}>
+                          <FaTimes /> Reject
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </Table>
@@ -171,59 +147,44 @@ const LeaveApproval = () => {
         </Card.Body>
       </Card>
 
+      {/* Approve / Reject modal */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>
-            {action === 'approve' ? 'Approve Leave' : 'Reject Leave'}
-          </Modal.Title>
+          <Modal.Title>{action === 'approve' ? '✅ Approve Leave' : '❌ Reject Leave'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedLeave && (
             <>
               <p>
                 <strong>Employee:</strong> {selectedLeave.employeeName}<br />
-                <strong>Leave Type:</strong> {selectedLeave.leaveType.replace('_', ' ')}<br />
-                <strong>Duration:</strong> {moment(selectedLeave.startDate).format('DD/MM/YYYY')} to {moment(selectedLeave.endDate).format('DD/MM/YYYY')}<br />
+                <strong>Type:</strong> {selectedLeave.leaveType?.replace(/_/g, ' ')}<br />
+                <strong>Duration:</strong> {moment(selectedLeave.startDate).format('DD/MM/YYYY')} → {moment(selectedLeave.endDate).format('DD/MM/YYYY')}<br />
                 <strong>Days:</strong> {selectedLeave.numberOfDays}<br />
                 <strong>Reason:</strong> {selectedLeave.reason}
               </p>
-              
               {action === 'approve' ? (
                 <Form.Group>
-                  <Form.Label>Comments (Optional)</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={comments}
-                    onChange={(e) => setComments(e.target.value)}
-                    placeholder="Add any comments..."
-                  />
+                  <Form.Label>Comments (optional)</Form.Label>
+                  <Form.Control as="textarea" rows={3} value={comments}
+                    onChange={e => setComments(e.target.value)}
+                    placeholder="Add any approval comments..." />
                 </Form.Group>
               ) : (
                 <Form.Group>
                   <Form.Label>Rejection Reason *</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="Please provide a reason for rejection..."
-                    required
-                  />
+                  <Form.Control as="textarea" rows={3} value={reason}
+                    onChange={e => setReason(e.target.value)}
+                    placeholder="Required — explain why this leave is rejected" required />
                 </Form.Group>
               )}
             </>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Cancel
-          </Button>
-          <Button 
-            variant={action === 'approve' ? 'success' : 'danger'} 
-            onClick={handleSubmit}
-          >
-            {action === 'approve' ? 'Approve' : 'Reject'}
+          <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
+          <Button variant={action === 'approve' ? 'success' : 'danger'}
+            onClick={action === 'approve' ? handleApprove : handleReject}>
+            {action === 'approve' ? 'Confirm Approve' : 'Confirm Reject'}
           </Button>
         </Modal.Footer>
       </Modal>
